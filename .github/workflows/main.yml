@@ -15,10 +15,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    continue-on-error: true
+    # This fork: the esp_netif/v5 port drops esp8266 (no esp_netif; needs the old
+    # tcpip_adapter), but builds the whole esp32 family on ESP-IDF v5.x.
+    # continue-on-error off so a failure is an honest red.
+    continue-on-error: false
     strategy:
       matrix:
-        target-hardware: [esp8266, esp32, esp32c3, esp32s3]
+        target-hardware: [esp32, esp32c3, esp32s3]
 
     steps:
     - uses: actions/checkout@v4
@@ -60,7 +63,7 @@ jobs:
       if: matrix.target-hardware != 'esp8266'
       uses: espressif/esp-idf-ci-action@v1
       with:
-        esp_idf_version: v4.4.2
+        esp_idf_version: release-v5.4
         target: ${{ matrix.target-hardware }}
         path: './'
 

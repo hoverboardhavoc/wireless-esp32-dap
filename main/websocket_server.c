@@ -754,7 +754,8 @@ static void co_http_error_400_response(co_cb_t *cb, co_socket_cb_t *scb) {
 #define WS_GUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 static int co_sha1(const unsigned char *src, size_t src_len, unsigned char *dst) {
-    return mbedtls_sha1_ret(src, src_len, dst);
+    // mbedtls 3.x (IDF v5.x) dropped the _ret suffix; mbedtls_sha1() has the same signature.
+    return mbedtls_sha1(src, src_len, dst);
 }
 
 static int co_base64_encode(unsigned char *dst, size_t dst_len, size_t *written_len, unsigned char *src, size_t src_len) {

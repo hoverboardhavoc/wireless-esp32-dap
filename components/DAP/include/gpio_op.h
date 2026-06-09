@@ -18,6 +18,9 @@
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3)
 #include "hal/cpu_ll.h"
+// IDF v5.x moved the dedicated-GPIO CSR defines (CSR_GPIO_OUT_USER / CSR_GPIO_IN_USER)
+// out of hal/cpu_ll.h into this header; include it so the SWCLK/SWDIO CSR macros resolve.
+#include "hal/dedic_gpio_cpu_ll.h"
 #endif
 
 #ifdef CONFIG_IDF_TARGET_ESP8266
@@ -162,7 +165,7 @@ __STATIC_INLINE __UNUSED void GPIO_PULL_UP_ONLY_SET(int io_num)
 #define SWDIO_CLR() do { asm volatile("ee.clr_bit_gpio_out 0x1"); } while (0)
 #define SWDIO_GET_IN() \
   ({ \
-    cpu_ll_read_dedic_gpio_in() & 0x1; \
+    dedic_gpio_cpu_ll_read_in() & 0x1; /* v5: was cpu_ll_read_dedic_gpio_in() */ \
   })
 #elif defined CONFIG_IDF_TARGET_ESP32C3
 #define SWCLK_SET() do { RV_SET_CSR(CSR_GPIO_OUT_USER, 2); } while(0)

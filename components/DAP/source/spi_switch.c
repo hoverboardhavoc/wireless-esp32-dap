@@ -21,6 +21,8 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32C3
 #include "hal/cpu_ll.h"
+// IDF v5.x: dedicated-GPIO CSR defines (CSR_GPIO_OEN_USER/OUT_USER) live here now.
+#include "hal/dedic_gpio_cpu_ll.h"
 #endif
 
 #ifdef CONFIG_IDF_TARGET_ESP8266
@@ -369,10 +371,10 @@ void DAP_SPI_Init()
 
     // We will use IO_MUX to get the maximum speed.
     gpio_ll_iomux_in(&GPIO, GPIO_NUM_12,FSPICLK_IN_IDX);
-    gpio_ll_iomux_out(&GPIO, GPIO_NUM_12, FUNC_GPIO12_FSPICLK, 0);
+    gpio_ll_iomux_out(&GPIO, GPIO_NUM_12, FUNC_GPIO12_FSPICLK); // v5: dropped 4th arg
 
     gpio_ll_iomux_in(&GPIO, GPIO_NUM_11,FSPID_IN_IDX);
-    gpio_ll_iomux_out(&GPIO, GPIO_NUM_11, FUNC_GPIO11_FSPID, 0);
+    gpio_ll_iomux_out(&GPIO, GPIO_NUM_11, FUNC_GPIO11_FSPID); // v5: dropped 4th arg
 
     GPIO.func_out_sel_cfg[GPIO_NUM_11].oen_sel = 0;
     GPIO.func_out_sel_cfg[GPIO_NUM_12].oen_sel = 0;
@@ -483,14 +485,14 @@ __FORCEINLINE void DAP_SPI_Deinit()
     PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[6], PIN_FUNC_GPIO);
     PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[7], PIN_FUNC_GPIO); // MOSI
 
-    GPIO.func_out_sel_cfg[GPIO_NUM_6].func_sel = CPU_GPIO_OUT1_IDX;
+    GPIO.func_out_sel_cfg[GPIO_NUM_6].out_sel = CPU_GPIO_OUT1_IDX;
     GPIO.func_out_sel_cfg[GPIO_NUM_6].oen_sel = 0;
 
-    GPIO.func_out_sel_cfg[GPIO_NUM_7].func_sel = CPU_GPIO_OUT0_IDX;
+    GPIO.func_out_sel_cfg[GPIO_NUM_7].out_sel = CPU_GPIO_OUT0_IDX;
     GPIO.func_out_sel_cfg[GPIO_NUM_7].oen_sel = 0;
 
     GPIO.func_in_sel_cfg[CPU_GPIO_IN0_IDX].sig_in_sel = 1;
-    GPIO.func_in_sel_cfg[CPU_GPIO_IN0_IDX].func_sel = GPIO_NUM_7;
+    GPIO.func_in_sel_cfg[CPU_GPIO_IN0_IDX].in_sel = GPIO_NUM_7;
 
     // enable SWCLK/MOSI output
     RV_WRITE_CSR(CSR_GPIO_OEN_USER, 3);
@@ -503,18 +505,18 @@ __FORCEINLINE void DAP_SPI_Deinit()
     gpio_ll_iomux_func_sel(GPIO_PIN_MUX_REG[GPIO_NUM_11], PIN_FUNC_GPIO); // MOSI
 
     // SWCLK output
-    GPIO.func_out_sel_cfg[GPIO_NUM_12].func_sel = CORE1_GPIO_OUT1_IDX;
+    GPIO.func_out_sel_cfg[GPIO_NUM_12].func_sel = CORE1_GPIO_OUT1_IDX; // s3 keeps func_sel
     GPIO.func_out_sel_cfg[GPIO_NUM_12].oen_sel = 1;
     gpio_ll_output_enable(&GPIO, GPIO_NUM_12);
 
     // SWDIO outout
-    GPIO.func_out_sel_cfg[GPIO_NUM_11].func_sel = CORE1_GPIO_OUT0_IDX;
+    GPIO.func_out_sel_cfg[GPIO_NUM_11].func_sel = CORE1_GPIO_OUT0_IDX; // s3 keeps func_sel
     GPIO.func_out_sel_cfg[GPIO_NUM_11].oen_sel = 1;
     gpio_ll_output_enable(&GPIO, GPIO_NUM_11);
 
     // SWDIO input
     GPIO.func_in_sel_cfg[CORE1_GPIO_IN0_IDX].sig_in_sel = 1;
-    GPIO.func_in_sel_cfg[CORE1_GPIO_IN0_IDX].func_sel = GPIO_NUM_11;
+    GPIO.func_in_sel_cfg[CORE1_GPIO_IN0_IDX].func_sel = GPIO_NUM_11; // s3 keeps func_sel
     gpio_ll_input_enable(&GPIO, GPIO_NUM_11);
 }
 #endif

@@ -50,6 +50,10 @@
 #ifdef CONFIG_IDF_TARGET_ESP8266
 // no space for esp8266
 #define IRAM_ATTR
+#else
+// IRAM_ATTR comes from esp_attr.h. The esp32-classic include chain doesn't pull it
+// in transitively (no hal/ headers), so include it explicitly for the esp32 family.
+#include "esp_attr.h"
 #endif
 
 #define likely(x)    __builtin_expect(!!(x), 1)

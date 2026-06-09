@@ -13,12 +13,16 @@
 
 #elif defined CONFIG_IDF_TARGET_ESP32
     #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 3, 0)
-        #include "soc/esp32/include/soc/gpio_struct.h"
-        #include "soc/esp32/include/soc/dport_access.h"
-        #include "soc/esp32/include/soc/dport_reg.h"
-        #include "soc/esp32/include/soc/periph_defs.h"
-        #include "soc/esp32/include/soc/spi_struct.h"
-        #include "soc/esp32/include/soc/spi_reg.h"
+        #include "soc/gpio_struct.h"
+        #include "soc/dport_access.h"
+        #include "soc/dport_reg.h"
+        #include "soc/periph_defs.h"
+        #include "soc/spi_struct.h"
+        #include "soc/spi_reg.h"
+        // v5: PIN_FUNC_SELECT / FUN_PD / FUN_PU / PIN_INPUT_ENABLE live in io_mux_reg.h;
+        // the GPIO_PIN_MUX_REG[] array is declared in gpio_periph.h.
+        #include "soc/io_mux_reg.h"
+        #include "soc/gpio_periph.h"
     #else
         #include "soc/soc/esp32/include/soc/gpio_struct.h"
         #include "soc/soc/esp32/include/soc/dport_access.h"
@@ -29,27 +33,27 @@
     #endif
     #include "hal/gpio_types.h"
 #elif defined CONFIG_IDF_TARGET_ESP32C3
-    #include "soc/esp32c3/include/soc/gpio_struct.h"
-    #include "hal/esp32c3/include/hal/gpio_ll.h"
-    #include "hal/esp32c3/include/hal/clk_gate_ll.h"
-    #include "soc/esp32c3/include/soc/gpio_struct.h"
-    #include "soc/esp32c3/include/soc/dport_access.h"
-    #include "soc/esp32c3/include/soc/periph_defs.h"
-    #include "soc/esp32c3/include/soc/usb_serial_jtag_reg.h"
-    #include "soc/esp32c3/include/soc/io_mux_reg.h"
-    #include "soc/esp32c3/include/soc/spi_struct.h"
-    #include "soc/esp32c3/include/soc/spi_reg.h"
+    #include "soc/gpio_struct.h"
+    #include "hal/gpio_ll.h"
+    #include "hal/clk_gate_ll.h"
+    #include "soc/gpio_struct.h"
+    #include "soc/dport_access.h"
+    #include "soc/periph_defs.h"
+    #include "soc/usb_serial_jtag_reg.h"
+    #include "soc/io_mux_reg.h"
+    #include "soc/spi_struct.h"
+    #include "soc/spi_reg.h"
 #elif defined CONFIG_IDF_TARGET_ESP32S3
-    #include "soc/esp32s3/include/soc/gpio_struct.h"
-    #include "hal/esp32s3/include/hal/gpio_ll.h"
-    #include "hal/esp32s3/include/hal/clk_gate_ll.h"
-    #include "soc/esp32s3/include/soc/gpio_struct.h"
-    #include "soc/esp32s3/include/soc/dport_access.h"
-    #include "soc/esp32s3/include/soc/periph_defs.h"
-    #include "soc/esp32s3/include/soc/usb_serial_jtag_reg.h"
-    #include "soc/esp32s3/include/soc/io_mux_reg.h"
-    #include "soc/esp32s3/include/soc/spi_struct.h"
-    #include "soc/esp32s3/include/soc/spi_reg.h"
+    #include "soc/gpio_struct.h"
+    #include "hal/gpio_ll.h"
+    #include "hal/clk_gate_ll.h"
+    #include "soc/gpio_struct.h"
+    #include "soc/dport_access.h"
+    #include "soc/periph_defs.h"
+    #include "soc/usb_serial_jtag_reg.h"
+    #include "soc/io_mux_reg.h"
+    #include "soc/spi_struct.h"
+    #include "soc/spi_reg.h"
 #else
     #error unknown hardware
 #endif

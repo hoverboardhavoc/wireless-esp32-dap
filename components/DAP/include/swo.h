@@ -1,7 +1,10 @@
 #ifndef __SWO_H__
 #define __SWO_H__
 
-typedef void * EventGroupHandle_t;
+// IDF v5.x: use the real FreeRTOS handle type instead of a local
+// `typedef void * EventGroupHandle_t;` which now conflicts with FreeRTOS.
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
 
 // event group bits
 #define SWO_GOT_DATA 0x00000001

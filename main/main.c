@@ -19,14 +19,16 @@
 #include "main/wifi_configuration.h"
 #include "main/wifi_handle.h"
 
+#if (USE_OTA == 1)
 #include "components/corsacOTA/src/corsacOTA.h"
+#endif
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
-#include "esp_event_loop.h"
+#include "esp_event.h"   // IDF v5.x: replaces removed esp_event_loop.h
 #include "esp_log.h"
 #include "nvs_flash.h"
 
@@ -35,7 +37,13 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
+#if (USE_MDNS == 1)
+// NOTE: On IDF v5.x mdns is an external managed component (espressif/mdns). This repo's
+// `main` still uses the legacy register_component() build style, which can't pull in a
+// managed component's headers. Disabled (USE_MDNS=0) for now; to re-enable, modernize
+// main/CMakeLists.txt to idf_component_register(... REQUIRES mdns) or vendor the component.
 #include "mdns.h"
+#endif
 
 extern void DAP_Setup(void);
 extern void DAP_Thread(void *argument);
@@ -51,6 +59,7 @@ static const char *MDNS_TAG = "server_common";
 #define DAP_TASK_AFFINITY 0
 #endif
 
+#if (USE_MDNS == 1)
 void mdns_setup() {
     // initialize mDNS
     int ret;
@@ -76,6 +85,7 @@ void mdns_setup() {
     }
     ESP_LOGI(MDNS_TAG, "mDNS instance name set to: [%s]", MDNS_INSTANCE);
 }
+#endif // (USE_MDNS == 1)
 
 void app_main() {
     // struct rst_info *rtc_info = system_get_rst_info();
