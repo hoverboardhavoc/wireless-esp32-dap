@@ -20,27 +20,34 @@ rewritten on `esp_netif`. The fork is named for the chips it now targets.
 
 ## Wiring
 
-![wiring](docs/wiring.png)
+![ESP32-C3 SuperMini SWD pin assignment](docs/supermini-pinout.svg)
 
-We drove an SWD target (a GD32F103 "Blue Pill", Cortex-M3) from an ESP32-C3 SuperMini. Five wires:
+Five wires from the ESP32-C3 SuperMini to the SWD target:
 
 | Signal | C3 SuperMini | Target |
 |--------|--------------|--------|
 | SWCLK  | GPIO6        | CLK    |
 | SWDIO  | GPIO7        | DIO    |
-| NRST   | GPIO5        | R (reset) |
+| NRST   | GPIO5        | reset (optional) |
 | 3V3    | 3V           | 3.3    |
 | GND    | G            | GND    |
 
 On the C3 SuperMini, GPIO6/GPIO7 are the FSPI IO_MUX pins, which is what lets the SWD-over-SPI path
-reach its higher clock. On the Blue Pill, four wires land on the 4-pin SWD header
-(`GND/CLK/DIO/3.3`); NRST is the separate `R` pin on the top row.
+reach its higher clock.
 
 - NRST is optional: OpenOCD resets the core in software over SWD, so `CLK/DIO/3V3/GND` are enough
   to connect, read IDCODE, flash and verify. The firmware *can* drive a hardware reset (SRST) on
   GPIO5 if you ask OpenOCD for one (`reset_config srst_only`), but it isn't required.
 - Power the target from the C3's 3V only; do not also connect the target's own USB.
 - Common ground is required; both sides are 3.3 V, so no level shifting.
+
+### Example: GD32F103 "Blue Pill" target
+
+![wiring](docs/wiring.png)
+
+This is the setup the C3 port was verified on: an ESP32-C3 SuperMini driving a GD32F103 Blue Pill
+(Cortex-M3) over the air. Four wires land on the Blue Pill's 4-pin SWD header (`GND/CLK/DIO/3.3`);
+NRST is the separate `R` pin on the top row.
 
 ## Build & flash
 
