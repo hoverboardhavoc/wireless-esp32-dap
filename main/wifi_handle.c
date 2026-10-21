@@ -139,6 +139,10 @@ void wifi_init(void) {
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
     ssid_change();
     ESP_ERROR_CHECK(esp_wifi_start());
+    // The C3 SuperMini's antenna is badly matched: at full TX power it stops ACKing the AP's
+    // authentication response and never (re)joins. Units in one batch did this after a minute
+    // of running. 34 = 8.5 dBm (units of 0.25 dBm), the commonly reported working cap.
+    ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(34));
 
     wait_for_ip();
 }
