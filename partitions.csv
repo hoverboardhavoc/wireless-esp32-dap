@@ -1,0 +1,8 @@
+# The hoverboard bridge's partition table (hoverboard-firmware-esp-tool,
+# apps/hoverboard-bridge/partitions.csv), copied so this probe image runs from the same OTA slots
+# and either firmware can install the other over Wi-Fi. 4 MB flash. The probe never touches keys.
+# Name,   Type, SubType,   Offset,   Size
+keys,     data, undefined, 0x9000,   0x4000
+otadata,  data, ota,       0xd000,   0x2000
+ota_0,    app,  ota_0,     0x10000,  0x1f0000
+ota_1,    app,  ota_1,     0x200000, 0x1f0000

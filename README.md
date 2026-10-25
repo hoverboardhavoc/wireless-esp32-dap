@@ -73,9 +73,10 @@ idf.py -p /dev/ttyACM0 flash
 or directly with esptool:
 ```
 esptool --chip esp32c3 -p /dev/ttyACM0 -b 460800 --before default_reset --after hard_reset \
-  write_flash --flash_mode dio --flash_size 2MB --flash_freq 80m \
+  write_flash --flash_mode dio --flash_size 4MB --flash_freq 80m \
   0x0     build/bootloader/bootloader.bin \
   0x8000  build/partition_table/partition-table.bin \
+  0xd000  build/ota_data_initial.bin \
   0x10000 build/wireless_esp_dap.bin
 ```
 
@@ -89,6 +90,31 @@ mDNS is disabled, so find the probe by its DHCP address. It listens on TCP **324
 ```
 sudo masscan 192.168.0.0/24 -p3240     # the host with 3240 open is the probe
 ```
+
+## Sharing the hoverboard bridge's OTA slots
+
+On branch `feat/ota-slot` the probe uses the hoverboard bridge's partition table (`partitions.csv`:
+`keys` 0x9000, `otadata` 0xd000, `ota_0` 0x10000, `ota_1` 0x200000, 4 MB flash) and the rollback
+bootloader, so an ESP on a powered robot can switch between the bridge and the probe over Wi-Fi with
+no USB. The probe never touches `keys`.
+
+- **Bridge to probe:** the app descriptor carries version `0.1.0` (`PROJECT_VER` in
+  `CMakeLists.txt`), so the bridge accepts `build/wireless_esp_dap.bin` as an update:
+  `hoverboard-cli update-esp build/wireless_esp_dap.bin`. The probe boots pending and marks itself
+  valid once Wi-Fi has an address; one that never gets an address is rolled back at the next reset.
+- **Probe to bridge:** the probe listens on TCP **5336** for a raw app image. It writes the bytes into
+  the inactive slot and, on a clean EOF, makes that slot the boot slot and restarts. Any error aborts
+  the update and the probe keeps running; the serial log has one line per outcome. No
+  authentication.
+  ```
+  nc <probe-ip> 5336 < hoverboard-bridge.bin       # or: pv hoverboard-bridge.bin | nc <probe-ip> 5336
+  ```
+  Some `nc` builds keep the socket open after the file ends; use `nc -N` (OpenBSD) or `nc -q 0`
+  (Debian) so the probe sees the EOF. The bridge then boots pending (`PendingVerify`) and nothing
+  confirms it, so the bootloader returns to the probe at the bridge's next reset. To keep the bridge,
+  run `hoverboard-cli update-esp hoverboard-bridge.bin` against it while it runs pending: that writes
+  the bridge into the probe's slot, reconnects and sends `ESP_UPDATE_CONFIRM` (the bridge's spec,
+  "Installing and updating the bridge"). `hoverboard-cli` has no confirm-only command.
 
 ## Connect over Wi-Fi
 

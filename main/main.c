@@ -18,6 +18,7 @@
 #include "main/timer.h"
 #include "main/wifi_configuration.h"
 #include "main/wifi_handle.h"
+#include "main/ota_slot.h"
 
 #if (USE_OTA == 1)
 #include "components/corsacOTA/src/corsacOTA.h"
@@ -110,7 +111,8 @@ void app_main() {
 #if (USE_UART_BRIDGE == 1)
     uart_bridge_init();
 #endif
-    wifi_init();
+    wifi_init(); // returns once the station has an address
+    ota_slot_start();
     DAP_Setup();
     timer_init();
 

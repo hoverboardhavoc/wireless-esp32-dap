@@ -9,5 +9,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # Exclude it from the build so the result is deterministic across hosts/CI.
 set(EXCLUDE_COMPONENTS corsacOTA)
 
+# The app descriptor version: the hoverboard bridge's update-esp reads major.minor.patch from it.
+set(PROJECT_VER "0.1.0")
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(wireless_esp_dap)
