@@ -2,6 +2,11 @@
 // running image so the rollback bootloader keeps it, and receives a replacement image over a raw
 // TCP connection: the bytes go into the inactive slot, and a clean EOF makes it the boot slot and
 // restarts. Any error aborts the update and the probe keeps running. No authentication.
+//
+// CONFIG_OTA_SLOT_TRIAL (default off): the image never marks its slot valid, so any reset returns
+// to the other slot, and a connection that closes with zero bytes is a reset request. ESP-IDF
+// refuses esp_ota_begin while the running slot is pending, so a trial build cannot write the other
+// slot (that slot holds the image the reset returns to).
 #include "main/ota_slot.h"
 
 #include <stdbool.h>
@@ -16,6 +21,18 @@
 static const char *TAG = "ota_slot";
 
 static void receive_one(int sock) {
+    static char buf[1024];
+    int n = recv(sock, buf, sizeof(buf), 0);
+    if (n <= 0) {
+#ifdef CONFIG_OTA_SLOT_TRIAL
+        ESP_LOGI(TAG, "empty connection: reset requested, restarting to roll back");
+        vTaskDelay(pdMS_TO_TICKS(200));
+        esp_restart();
+#else
+        ESP_LOGW(TAG, "empty connection: nothing written");
+        return;
+#endif
+    }
     const esp_partition_t *slot = esp_ota_get_next_update_partition(NULL);
     if (slot == NULL) {
         ESP_LOGE(TAG, "update failed: no inactive slot");
@@ -27,10 +44,8 @@ static void receive_one(int sock) {
         ESP_LOGE(TAG, "update failed: begin %s: %s", slot->label, esp_err_to_name(err));
         return;
     }
-    static char buf[1024];
     size_t total = 0;
-    for (;;) {
-        int n = recv(sock, buf, sizeof(buf), 0);
+    for (;; n = recv(sock, buf, sizeof(buf), 0)) {
         if (n == 0) {
             break;
         }
@@ -90,11 +105,11 @@ static void ota_slot_task(void *arg) {
     }
 }
 
-static volatile bool marked_valid;
+static volatile bool joined;
 
 static void guard_task(void *arg) {
     vTaskDelay(pdMS_TO_TICKS(OTA_SLOT_JOIN_TIMEOUT_S * 1000));
-    if (!marked_valid) {
+    if (!joined) {
         ESP_LOGE(TAG, "no Wi-Fi address in %d s while pending, restarting to roll back",
                  OTA_SLOT_JOIN_TIMEOUT_S);
         vTaskDelay(pdMS_TO_TICKS(200));
@@ -114,9 +129,14 @@ void ota_slot_guard(void) {
 }
 
 void ota_slot_start(void) {
-    marked_valid = true;
+    joined = true;
+#ifdef CONFIG_OTA_SLOT_TRIAL
+    ESP_LOGI(TAG, "trial build: %s left pending, a reset returns to the other slot",
+             esp_ota_get_running_partition()->label);
+#else
     esp_err_t err = esp_ota_mark_app_valid_cancel_rollback();
     ESP_LOGI(TAG, "running %s marked valid: %s", esp_ota_get_running_partition()->label,
              esp_err_to_name(err));
+#endif
     xTaskCreate(ota_slot_task, "ota_slot", 3072, NULL, 5, NULL);
 }

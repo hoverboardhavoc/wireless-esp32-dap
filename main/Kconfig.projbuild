@@ -1,4 +1,11 @@
 menu "wireless dap config"
     config USE_WEBSOCKET_DAP
         bool "Enable the websocket dap feature"
+
+    config OTA_SLOT_TRIAL
+        bool "Trial build: never mark the slot valid"
+        default n
+        help
+            The image never marks its OTA slot valid, so any reset returns to the image in the
+            other slot. A connection to port 5336 that closes with zero bytes restarts the probe.
 endmenu

@@ -120,6 +120,18 @@ no USB. The probe never touches `keys`.
   the bridge into the probe's slot, reconnects and sends `ESP_UPDATE_CONFIRM` (the bridge's spec,
   "Installing and updating the bridge"). `hoverboard-cli` has no confirm-only command.
 
+### Trial build (`CONFIG_OTA_SLOT_TRIAL`, default off)
+
+With `CONFIG_OTA_SLOT_TRIAL=y` (menuconfig, "wireless dap config") the probe never marks its slot
+valid, so any reset returns the unit to the bridge in the other slot, with no USB and no power cycle:
+
+- `nc <probe-ip> 5336 < /dev/null` (a connection that closes with zero bytes) restarts the probe, and
+  the bootloader rolls back to the bridge.
+- A pending probe with no Wi-Fi address after 120 s restarts the same way.
+- Sending an image to 5336 fails with `ESP_ERR_OTA_ROLLBACK_INVALID_STATE`: ESP-IDF refuses to write
+  the other slot while the running one is pending, since that slot holds the image the reset
+  returns to. The probe keeps running.
+
 ## Connect over Wi-Fi
 
 OpenOCD/pyOCD expect a CMSIS-DAP probe as a local USB device, but this probe is on Wi-Fi, so a
