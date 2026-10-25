@@ -101,7 +101,11 @@ no USB. The probe never touches `keys`.
 - **Bridge to probe:** the app descriptor carries version `0.1.0` (`PROJECT_VER` in
   `CMakeLists.txt`), so the bridge accepts `build/wireless_esp_dap.bin` as an update:
   `hoverboard-cli update-esp build/wireless_esp_dap.bin`. The probe boots pending and marks itself
-  valid once Wi-Fi has an address; one that never gets an address is rolled back at the next reset.
+  valid once Wi-Fi has an address; a pending probe with no address after 120 s restarts, and the
+  bootloader returns to the bridge.
+- **No NVS:** the bridge's table has no `nvs` partition, so Wi-Fi NVS storage and PHY calibration
+  storage are off (`CONFIG_ESP_WIFI_NVS_ENABLED`, `CONFIG_ESP_PHY_CALIBRATION_AND_DATA_STORAGE`) and a
+  failed `nvs_flash_init()` is logged, not fatal. The PHY runs a full calibration at every boot.
 - **Probe to bridge:** the probe listens on TCP **5336** for a raw app image. It writes the bytes into
   the inactive slot and, on a clean EOF, makes that slot the boot slot and restarts. Any error aborts
   the update and the probe keeps running; the serial log has one line per outcome. No

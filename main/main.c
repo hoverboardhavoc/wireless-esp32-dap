@@ -106,13 +106,20 @@ void app_main() {
     //             rtc_info->excvaddr, rtc_info->depc);
     // }
 
-    ESP_ERROR_CHECK(nvs_flash_init());
+    // The bridge's partition table (partitions.csv) has no nvs partition. Wi-Fi and PHY
+    // calibration are configured not to use NVS, and nothing else here does, so a missing
+    // partition is logged and ignored.
+    esp_err_t nvs = nvs_flash_init();
+    if (nvs != ESP_OK) {
+        ESP_LOGW(MDNS_TAG, "no NVS (%s), running without it", esp_err_to_name(nvs));
+    }
+    ota_slot_guard();
 
 #if (USE_UART_BRIDGE == 1)
     uart_bridge_init();
 #endif
     wifi_init(); // returns once the station has an address
-    ota_slot_start();
+    ota_slot_start(); // marks the slot valid, then serves port 5336
     DAP_Setup();
     timer_init();
 

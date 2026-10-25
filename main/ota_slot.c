@@ -4,6 +4,8 @@
 // restarts. Any error aborts the update and the probe keeps running. No authentication.
 #include "main/ota_slot.h"
 
+#include <stdbool.h>
+
 #include "esp_log.h"
 #include "esp_ota_ops.h"
 #include "esp_system.h"
@@ -88,7 +90,31 @@ static void ota_slot_task(void *arg) {
     }
 }
 
+static volatile bool marked_valid;
+
+static void guard_task(void *arg) {
+    vTaskDelay(pdMS_TO_TICKS(OTA_SLOT_JOIN_TIMEOUT_S * 1000));
+    if (!marked_valid) {
+        ESP_LOGE(TAG, "no Wi-Fi address in %d s while pending, restarting to roll back",
+                 OTA_SLOT_JOIN_TIMEOUT_S);
+        vTaskDelay(pdMS_TO_TICKS(200));
+        esp_restart();
+    }
+    vTaskDelete(NULL);
+}
+
+void ota_slot_guard(void) {
+    esp_ota_img_states_t state;
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    if (esp_ota_get_state_partition(running, &state) == ESP_OK &&
+        state == ESP_OTA_IMG_PENDING_VERIFY) {
+        ESP_LOGI(TAG, "running %s pending verification", running->label);
+        xTaskCreate(guard_task, "ota_guard", 2048, NULL, 5, NULL);
+    }
+}
+
 void ota_slot_start(void) {
+    marked_valid = true;
     esp_err_t err = esp_ota_mark_app_valid_cancel_rollback();
     ESP_LOGI(TAG, "running %s marked valid: %s", esp_ota_get_running_partition()->label,
              esp_err_to_name(err));
